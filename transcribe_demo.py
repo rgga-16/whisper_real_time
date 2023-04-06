@@ -10,17 +10,18 @@ from datetime import datetime, timedelta
 from queue import Queue
 from tempfile import NamedTemporaryFile
 from time import sleep
+import torch 
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", default="medium", help="Model to use",
+    parser.add_argument("--model", default="tiny", help="Model to use",
                         choices=["tiny", "base", "small", "medium", "large"])
     parser.add_argument("--non_english", action='store_true',
                         help="Don't use the english model.")
-    parser.add_argument("--energy_threshold", default=1000,
+    parser.add_argument("--energy_threshold", default=500,
                         help="Energy level for mic to detect.", type=int)
-    parser.add_argument("--record_timeout", default=2,
+    parser.add_argument("--record_timeout", default=0.4,
                         help="How real time the recording is in seconds.", type=float)
     parser.add_argument("--phrase_timeout", default=3,
                         help="How much empty space between recordings before we "
@@ -99,8 +100,11 @@ def main():
                     f.write(wav_data.read())
 
                 # Read the transcription.
-                result = audio_model.transcribe(temp_file)
+                # THIS IS WHERE THE TRANSCRIPTION HAPPENS.
+                #############################################
+                result = audio_model.transcribe(temp_file, fp16=torch.cuda.is_available())
                 text = result['text'].strip()
+                #############################################
 
                 # If we detected a pause between recordings, add a new item to our transcripion.
                 # Otherwise edit the existing one.
